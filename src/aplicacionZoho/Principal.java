@@ -23,15 +23,23 @@ import org.xml.sax.InputSource;
 
 public class Principal {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws HttpException, IOException {
 		// exercicio 1
 		// mostrarContactos();
 
 		// exercicio 2
-		Connection con = BDManager.abirBD();
-		ArrayList<Lead> lsita = BDManager.getLeads(con):
+
+		try {
+			Connection con = BDManager.abrirBD();
+			ArrayList<Lead> lista;
+			lista = BDManager.getLeads(con);
 			BDManager.cerrarBD(con);
-		Zohomanager.insertLeads(lista);
+			ZohoManager.insertLeads(lista);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	private static void mostrarContactos() {
@@ -147,11 +155,12 @@ public class Principal {
 }
 
 class BDManager {
-	public static void abrirBD() {
+	public static Connection abrirBD() {
 		System.out.println("Conectando con base de datos");
+		return null;
 	}
 
-	public static void cerrarBD() {
+	public static void cerrarBD(Connection con) {
 		System.out.println("Pechando base de datos");
 	}
 
@@ -179,7 +188,7 @@ class BDManager {
 }
 
 class ZohoManager {
-	public static void insertLeads(ArrayList<Lead> lista) {
+	public static void insertLeads(ArrayList<Lead> lista) throws HttpException, IOException {
 		StringBuilder xml = new StringBuilder();
 		xml.append("<Leads>");
 		int contador = 1;
@@ -188,10 +197,20 @@ class ZohoManager {
 			xml.append("<FL var='First Name'>");
 			xml.append(l.firstName);
 			xml.append("</FL>");
+			
+			xml.append("<FL var='Last Name'>");
+			xml.append(l.lastName);
+			xml.append("</FL>");
+			
+			
+			xml.append("<FL var='Company'>");
+			xml.append(l.company);
+			xml.append("</FL>");
+			
+			
 			xml.append("</row>");
 			// todo co resto repetir co resto
 			contador++;
-
 		}
 		xml.append("</Leads>");
 
@@ -214,6 +233,10 @@ class ZohoManager {
 		
 		try {
 			int resultado = httpClient.executeMethod(post);
+			System.out.println(resultado);
+			String postResposta = post.getResponseBodyAsString(); 
+			
+		} finally {
 			
 		}
 	}
