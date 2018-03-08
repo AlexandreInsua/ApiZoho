@@ -1,6 +1,7 @@
 package aplicacionAPI;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -20,24 +21,37 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.xml.sax.InputSource;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Principal {
 
 	public static void main(String[] args) throws HttpException, IOException {
 
 		int opcion = 20;
-		
+
 		do {
 			System.err.println("\nMENÚ DE EXERCICIOS DA API DE ZOHO");
 
-			System.out.println("Exercicio 1.- Mostrar todos os contactos de Zoho");
-			System.out.println("Exercicio 2.- Inserir Leads en Zoho desde unha BBDD MySQL");
-			System.out.println("Exercicio 3.- Listar leads usando Python con datos json");
-			System.out.println("Exercicio 4.- Listar casos usando Python con datos xml");
-			System.out.println("Exercicio 5.- Engadir un orzamento a un contacto en Zoho usando XML");
-			System.out.println("Exercicio 6.- Obter un listado das ligas en java e xml");
-			System.out.println("Exercicio 6. <pulsar 7> - Obter un listado das ligas en python e json");
+			System.out.println("Exercicio 1.- Mostrar todos os 	CONTACTOS de Zoho");
+			System.out.println("Exercicio 2.- Inserir LEADS en Zoho desde unha BBDD MySQL");
+			System.out.println("Exercicio 3.- Listar LEADS usando Python con datos JSON");
+			System.out.println("Exercicio 4.- Listar CASOS usando Python con datos XML");
+			System.out.println("Exercicio 5.- Engadir un orzamento a un CONTACTO en Zoho usando XML");
+			System.out.println("Exercicio 6.- Obter un listado das LIGAS en java e xml");
+			System.out.println("Exercicio 7. <pulsar 7> - Obter un listado das ligas en python e json");
+			System.out.println("Exemplo 8.- Listar CONTAS");
+			System.out.println("Exemplo 9.- Parsear caso en JSON");
+			System.out.println("Exemplo 10.- Gardar información en Excel");
+			System.out.println("Exemplo 11.- Inserir CONTA en zoho");
 			System.out.println("0.- Saír");
 
 			opcion = Integer.parseInt(introducirDatos("Introduce unha opción: "));
@@ -77,6 +91,21 @@ public class Principal {
 			case 6:
 				mostrarLigasFutbol();
 				break;
+			case 7:
+				JOptionPane.showMessageDialog(null, "Ver ficheiro .py ");
+				break;
+			case 8:
+				listarContas();
+				break;
+			case 9:
+				parsearJson();
+				break;
+			case 10:
+				gardarExcell();
+				break;
+			case 11:
+				inserirCodigo();
+				break;
 			case 0:
 				System.exit(0);
 				break;
@@ -89,80 +118,287 @@ public class Principal {
 
 	}
 
+	private static void inserirCodigo() {
+		// preparamos a información a inserir
+		String accountName = "";
+		String webSite = "";
+		String phone = "";
+
+		String xml;
+		xml = "<Accounts>";
+		xml += "<row no='1'>";
+
+		xml += "<FL val='Account Name'>" + accountName + "</FL>";
+		xml += "<FL val='Website'>" + webSite + "</FL>";
+		xml += "<FL val='Phone'>" + phone + "</FL>";
+
+		xml += "</row>";
+		xml += "</Accounts>";
+
+		// lanzamos a petición
+		String url = "https://crm.zoho.eu/crm/private/xml/Accounts/insertRecords";
+		String token = "0971a0330c11e6f870cb6067152c9a66";
+
+		Account cuenta = new Account("Cebem2", "986332211", "www.cebem.net");
+
+		HttpClient httpClient = new HttpClient();
+		PostMethod post = new PostMethod(url);
+		post.setParameter("authtoken", token);
+		post.setParameter("scope", "crmapi");
+		post.setParameter("xmlData", xml);
+
+		int resultado = 0;
+		String postRespuesta = null;
+		try {
+			resultado = httpClient.executeMethod(post);
+			postRespuesta = post.getResponseBodyAsString();
+		} catch (HttpException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(resultado);
+
+		System.out.println(postRespuesta);
+
+	}
+
+	private static void gardarExcell() {
+		// Preparamos un libro nuevo de excel
+		HSSFWorkbook libro = new HSSFWorkbook();
+		// añadimos una nueva hoja de excel
+		HSSFSheet hoja = libro.createSheet();
+		// añadimos a esa hoja una nueva fila
+		HSSFRow fila = hoja.createRow(0);
+		// Creamos una primera celda de esa hoja
+		HSSFCell celda0 = fila.createCell(0);
+		// Creamos una segunda celda de esa hoja
+		HSSFCell celda1 = fila.createCell(1);
+		// insertamos en nuestra primera celda un valor
+		celda0.setCellValue("Esto es una prueba");
+		// insertamos en nuestra segunda celda otro valor
+		celda1.setCellValue("cebem");
+
+		// guardamos nuestro fichero en disco
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream("miFicheroExcel.xls");
+			libro.write(fos);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				libro.close();
+				fos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	private static void parsearJson() {
+		String postResp = "  <<esto es un texto en formato json>>  ";
+		// Instanciamos o parseador
+		JsonParser parser = new JsonParser();
+		// para cada elemento vaise parseando o fillo
+		JsonObject raiz = parser.parse(postResp).getAsJsonObject();
+		JsonObject response = raiz.get("response").getAsJsonObject();
+		JsonObject result = response.get("result").getAsJsonObject();
+		JsonObject cases = result.get("Cases").getAsJsonObject();
+		// ollo a colección vai nun jsonArray!!!!
+		JsonArray rows = cases.get("row").getAsJsonArray();
+		// para cada elemento da collección cun buble for each
+		for (JsonElement row : rows) {
+			JsonArray fls = row.getAsJsonObject().get("FL").getAsJsonArray();
+			for (JsonElement fl : fls) {
+				if (fl.getAsJsonObject().get("val").getAsString().equals("Product Name")) {
+					String content = fl.getAsJsonObject().get("content").getAsString();
+					System.out.println("Nombre del producto" + content);
+				}
+				if (fl.getAsJsonObject().get("val").getAsString().equals("Subject")) {
+					String content = fl.getAsJsonObject().get("content").getAsString();
+					System.out.println("Texto del problema" + content);
+				}
+			}
+		}
+
+	}
+
+	private static void listarContas() {
+
+		// RECUPERAR A INFORMACIÓN ---------------------------------------------
+		// Url á que vamos lanzar a petición
+		String url = "https://crm.zoho.eu/crm/private/xml/Accounts/getRecords";
+		// Token persoal
+		String token = "0971a0230c11e6kt70cb6067152c8a66";
+		// Cliente que permite lanzar peticións web
+		HttpClient httpClient = new HttpClient();
+		// preparamos unha petición de tipo POST con 2 parámetros
+		PostMethod post = new PostMethod(url);
+		post.setParameter("authtoken", token);
+		post.setParameter("scope", "crmapi");
+		// lanzamos a petición
+
+		// obtenemos a petición en formato texto (xml)
+		String postResp = null;
+		try {
+			httpClient.executeMethod(post);
+			postResp = post.getResponseBodyAsString();
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+		System.out.println(postResp);
+
+		// PARSEAR A INFORMACIÓN EN XML
+		// -----------------------------------------
+		// Contar o número de empresas
+		try {
+			// crea unha instancia do parteador
+			XPath xPath = XPathFactory.newInstance().newXPath();
+			InputSource inputSourcerContador = new InputSource(new StringReader(postResp));
+			// crea a expresión
+			String expresion = "count(response/result/Accounts/row)";
+			// recupera o número de contas
+			Double numeroCuentas = (Double) xPath.evaluate(expresion, inputSourcerContador, XPathConstants.NUMBER);
+
+			System.out.println("Numero cuentas=" + numeroCuentas);
+
+		} catch (XPathExpressionException e) {
+			e.printStackTrace();
+		}
+
+		// Obter datos (nome e teléfono) da 1º empresa
+		try {
+			XPath xPath = XPathFactory.newInstance().newXPath();
+
+			InputSource inputSourcer1 = new InputSource(new StringReader(postResp));
+
+			String expresion = "response/result/Accounts/row[0]/FL[@val='Account Name']/text()";
+			String nombre = (String) xPath.evaluate(expresion, inputSourcer1, XPathConstants.STRING);
+
+			InputSource inputSourcer2 = new InputSource(new StringReader(postResp));
+
+			expresion = "response/result/Accounts/row[0]/FL[@val='Phone']/text()";
+			String telefono = (String) xPath.evaluate(expresion, inputSourcer2, XPathConstants.STRING);
+
+			System.out.println(nombre);
+			System.out.println(telefono);
+		} catch (XPathExpressionException e) {
+			e.printStackTrace();
+		}
+
+		// Obter datos de todas as empresas
+
+		try {
+			XPath xPath = XPathFactory.newInstance().newXPath();
+			InputSource inputSourcerContador = new InputSource(new StringReader(postResp));
+			String expresion = "count(response/result/Accounts/row)";
+
+			Double numeroCuentas = (Double) xPath.evaluate(expresion, inputSourcerContador, XPathConstants.NUMBER);
+
+			System.out.println("Numero cuentas=" + numeroCuentas);
+
+			for (int i = 1; i <= numeroCuentas; i++) {
+				InputSource inputSourcer1 = new InputSource(new StringReader(postResp));
+
+				expresion = "response/result/Accounts/row[" + i + "]/FL[@val='Account Name']/text()";
+				String nombre = (String) xPath.evaluate(expresion, inputSourcer1, XPathConstants.STRING);
+
+				InputSource inputSourcer2 = new InputSource(new StringReader(postResp));
+
+				expresion = "response/result/Accounts/row[" + i + "]/FL[@val='Phone']/text()";
+				String telefono = (String) xPath.evaluate(expresion, inputSourcer2, XPathConstants.STRING);
+
+				System.out.println(nombre);
+				System.out.println(telefono);
+
+			}
+		} catch (XPathExpressionException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	private static void mostrarLigasFutbol() {
-		
+
 		String key = "77cc1f9a011c7583dc33958e2aaa1443";
-		
-		String url = "http://www.apiclient.resultados-futbol.com/scripts/api/api.php?key="+key+"&format=xml&req=categories&filter=all";
+
+		String url = "http://www.apiclient.resultados-futbol.com/scripts/api/api.php?key=" + key
+				+ "&format=xml&req=categories&filter=all";
 		HttpClient cliente = new HttpClient();
 		GetMethod get = new GetMethod(url);
-		
+
 		try {
 			cliente.executeMethod(get);
-			
+
 			String xml = get.getResponseBodyAsString();
-			
+
 			xml = xml.replaceAll("\n", "");
-			
+
 			System.out.println(xml);
 
 			get.releaseConnection();
 			XPath parser = XPathFactory.newInstance().newXPath();
 			InputSource input = new InputSource(new StringReader(xml));
-			
+
 			String reconto = "count(categories/category)";
 			double numeroLigas = (double) parser.evaluate(reconto, input, XPathConstants.NUMBER);
-			
-			
+
 			System.out.println("\nLISTA DE LIGAS DE FÚTBOL\nNº de ligas: " + (int) numeroLigas);
-			
-			System.out.println("Id \t IdLiga Orde \t Ano \t Alias \t Nome \t País \t Continente \t Xornada Actual \t Xornadas Totais");
+
+			System.out.println(
+					"Id \t IdLiga Orde \t Ano \t Alias \t Nome \t País \t Continente \t Xornada Actual \t Xornadas Totais");
 			for (int i = 0; i < numeroLigas; i++) {
 				InputSource is1 = new InputSource(new StringReader(xml));
-				String expresionId = "categories/category["+i+"]/id/text()";
+				String expresionId = "categories/category[" + i + "]/id/text()";
 				String id = (String) parser.evaluate(expresionId, is1, XPathConstants.STRING);
-				
+
 				InputSource is2 = new InputSource(new StringReader(xml));
-				String expresionLeagueId = "categories/category["+i+"]/league_id/text()";
+				String expresionLeagueId = "categories/category[" + i + "]/league_id/text()";
 				String leagueId = (String) parser.evaluate(expresionLeagueId, is2, XPathConstants.STRING);
-				
+
 				InputSource is3 = new InputSource(new StringReader(xml));
-				String expresionOrder = "categories/category["+i+"]/order/text()";
+				String expresionOrder = "categories/category[" + i + "]/order/text()";
 				String order = (String) parser.evaluate(expresionOrder, is3, XPathConstants.STRING);
-				
+
 				InputSource is4 = new InputSource(new StringReader(xml));
-				String expresionYear = "categories/category["+i+"]/year/text()";
+				String expresionYear = "categories/category[" + i + "]/year/text()";
 				String year = (String) parser.evaluate(expresionYear, is4, XPathConstants.STRING);
-				
+
 				InputSource is5 = new InputSource(new StringReader(xml));
-				String expresionAlias = "categories/category["+i+"]/alias/text()";
+				String expresionAlias = "categories/category[" + i + "]/alias/text()";
 				String alias = (String) parser.evaluate(expresionAlias, is5, XPathConstants.STRING);
-				
+
 				InputSource is6 = new InputSource(new StringReader(xml));
-				String expresionName = "categories/category["+i+"]/name/text()";
+				String expresionName = "categories/category[" + i + "]/name/text()";
 				String name = (String) parser.evaluate(expresionName, is6, XPathConstants.STRING);
-				
+
 				InputSource is7 = new InputSource(new StringReader(xml));
-				String expresionCountry = "categories/category["+i+"]/country/text()";
+				String expresionCountry = "categories/category[" + i + "]/country/text()";
 				String country = (String) parser.evaluate(expresionCountry, is7, XPathConstants.STRING);
 				country = country.toUpperCase();
-				
+
 				InputSource is8 = new InputSource(new StringReader(xml));
-				String expresionContinent = "categories/category["+i+"]/continent/text()";
+				String expresionContinent = "categories/category[" + i + "]/continent/text()";
 				String continent = (String) parser.evaluate(expresionContinent, is8, XPathConstants.STRING);
 				continent = continent.toUpperCase();
-				
+
 				InputSource is9 = new InputSource(new StringReader(xml));
-				String expresionCurrentRound = "categories/category["+i+"]/current_round/text()";
+				String expresionCurrentRound = "categories/category[" + i + "]/current_round/text()";
 				String currentRound = (String) parser.evaluate(expresionCurrentRound, is9, XPathConstants.STRING);
-				
+
 				InputSource is10 = new InputSource(new StringReader(xml));
-				String expresionTotalRounds = "categories/category["+i+"]/total_rounds/text()";
+				String expresionTotalRounds = "categories/category[" + i + "]/total_rounds/text()";
 				String totalRounds = (String) parser.evaluate(expresionTotalRounds, is10, XPathConstants.STRING);
 
-				System.out.println(id + "\t" + leagueId + "\t" +  order + "\t" + year + "\t" +  alias + "\t\t " + name+ "\t" + country + "\t" + continent + "\t" + currentRound + "\t" + totalRounds );
+				System.out.println(id + "\t" + leagueId + "\t" + order + "\t" + year + "\t" + alias + "\t\t " + name
+						+ "\t" + country + "\t" + continent + "\t" + currentRound + "\t" + totalRounds);
 			}
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (XPathExpressionException e) {
